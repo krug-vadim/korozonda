@@ -83,7 +83,7 @@ class AudioAttachment < Attachment
 
 	def get_info
 		@info = @app.audio.audio.getById(audios: "#{owner_id}_#{aid}")[0]
-		return (@info == [])
+		return (@info != [])
 	end
 
 	def url
