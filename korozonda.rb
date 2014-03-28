@@ -79,5 +79,6 @@ puts total
 		post.save_raw
 		#post.save_comments
 		post.save_attachments
+		sleep(0.5)
 	end
 end

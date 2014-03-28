@@ -83,6 +83,7 @@ class AudioAttachment < Attachment
 
 	def get_info
 		@info = @app.audio.audio.getById(audios: "#{owner_id}_#{aid}")[0]
+		return (@info == [])
 	end
 
 	def url
@@ -98,10 +99,12 @@ class AudioAttachment < Attachment
 	end
 
 	def save
-		get_info
+		return if !get_info
 
 		track_name = "#{artist} - #{title}.mp3"
 		track_name = Zaru.sanitize!(track_name)
+
+		return if track_name.empty?
 
 		puts "[i] downloading #{track_name}: #{url}..."
 		download_file(url, "#{post_dir}/#{track_name}")
