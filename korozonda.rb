@@ -76,9 +76,7 @@ puts total
 
 	posts.each do |raw|
 		post = Post::new(app, raw)
-		post.save_raw
-		#post.save_comments
-		post.save_attachments
+		post.save
 		sleep(0.5)
 	end
 end

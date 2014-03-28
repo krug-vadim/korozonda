@@ -125,4 +125,16 @@ class AttachmentFactory
 			#raise "unknown attachment type: #{typename}"
 		end
 	end
+
+	def self.get_attachments(app, attachments, post_dir)
+		return [] if attachments.empty?
+
+		attachments.map do |attachment|
+			AttachmentFactory::create(
+				app,
+				attachment['type'],
+				attachment[attachment['type']],
+				post_dir)
+		end
+	end
 end

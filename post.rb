@@ -27,6 +27,7 @@ copy_text - если запись является копией записи с 
 =end
 
 require_relative 'attachment'
+require_relative 'comment'
 
 class Post
 	attr_reader :comments
@@ -35,7 +36,9 @@ class Post
 	def initialize(app, raw)
 		@raw = raw
 		@app = app
+
 		@attachments = get_attachments
+		@comments = get_comments
 	end
 
 	def id
@@ -52,14 +55,26 @@ class Post
 
 	def get_attachments
 		return [] if !@raw.include?('attachments')
-		return [] if @raw['attachments'].empty?
-		@raw['attachments'].map do |attachment|
-			AttachmentFactory::create(
-				@app,
-				attachment['type'],
-				attachment[attachment['type']],
-				post_dir)
+		AttachmentFactory.get_attachments(@app, @raw['attachments'], post_dir)
+	end
+
+	def get_comments
+		return [] if !@raw.include?('comments')
+		return [] if @raw['comments'].empty?
+
+		all_comments = []
+		comments_count = @raw['comments']['count']
+		return [] if comments_count <= 0
+
+		(0 .. comments_count).step(STEP).each do |offset|
+
+			comments = @app.wall.getComments(post_id: id, offset: offset, count: STEP, preview_length: 0, v: 4.4)
+			comments = comments[1 .. -1]
+
+			all_comments += comments.map{|comment| Comment.new(@app, comment, post_dir) }
 		end
+
+		all_comments
 	end
 
 	def post_dir
@@ -90,7 +105,7 @@ class Post
 	end
 
 	def save_comments
-		return if @raw['comments']['count'].times <= 0
+		comments.each { |comment| comment.save if comment }
 	end
 
 	def save_attachments
@@ -100,8 +115,8 @@ class Post
 	def save
 		return if exists?
 
-		save_comments
-		save_attachments
 		save_raw
+		save_attachments
+		save_comments
 	end
 end
