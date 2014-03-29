@@ -168,7 +168,6 @@ class PollAttachment < Attachment
 
 	def get_info
 		@info = @app.polls.getById(poll_id: poll_id)
-		puts @info.inspect
 		return (@info != [])
 	end
 
@@ -176,7 +175,6 @@ class PollAttachment < Attachment
 		return if !get_info
 
 		File::new("#{post_dir}/#{poll_id}.poll", 'w').write(@info)
-		raise
 	end
 end
 
