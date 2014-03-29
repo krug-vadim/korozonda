@@ -119,19 +119,22 @@ class AudioAttachment < Attachment
 
 	def get_info
 		@info = @app.audio.audio.getById(audios: "#{owner_id}_#{aid}")[0]
-		return (@info != [])
+		return (@info != nil) && (@info != []) && (!@info.empty?)
 	end
 
 	def url
+		return '' if !@info.include?('url')
 		@info['url']
 	end
 
 	def artist
-		@info['artist'].sub(/[\/]/,'!')
+		return '' if !@info.include?('artist')
+		@info['artist']
 	end
 
 	def title
-		@info['title'].sub(/[\/]/,'|')
+		return '' if !@info.include?('title')
+		@info['title']
 	end
 
 	def save
@@ -204,7 +207,8 @@ class AttachmentFactory
 		when 'page' # – wiki страница
 			return nil
 		else
-			raise "unknown attachment type: #{typename}"
+			#raise "unknown attachment type: #{typename}"
+			puts "[e] unknown attachment type: #{typename}"
 		end
 	end
 

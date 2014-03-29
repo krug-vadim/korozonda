@@ -91,9 +91,7 @@ class Post
 
 		old_raw = File::open(raw_path).read
 
-		return false if @raw != old_raw
-
-		true
+		return (@raw.to_s == old_raw)
 	end
 
 	def save_raw
