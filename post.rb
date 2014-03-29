@@ -89,8 +89,6 @@ class Post
 		return false if not Dir::exist?(post_dir)
 		return false if not File::exist?(raw_path)
 
-		puts "raw exists"
-
 		old_raw = File::open(raw_path).read
 
 		return false if @raw != old_raw

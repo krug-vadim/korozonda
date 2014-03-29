@@ -8,6 +8,8 @@
 require 'net/http'
 require 'uri'
 
+require 'open-uri'
+
 require 'zaru'
 
 class Attachment
@@ -17,9 +19,16 @@ class Attachment
 		@post_dir = post_dir
 	end
 
-	def download_file(url, filename)
+	def download_file(url, post_dir, filename)
 		filename = filename[0 .. 254 ] if filename.size >= 255
-		File.open(filename, 'wb') { |f| f.puts Net::HTTP.get(URI.parse(url)) }
+
+		real_url = url
+
+		open(url) do |resp|
+			real_url = resp.base_uri.to_s
+		end
+
+		File.open("#{post_dir}/#{Zaru.sanitize!(filename)}", 'wb') { |f| f.puts Net::HTTP.get(URI.parse(real_url)) }
 	end
 end
 
@@ -47,7 +56,34 @@ class PhotoAttachment < Attachment
 
 	def save
 		puts "[i] downloading #{src_big}..."
-		download_file(src_big, "#{post_dir}/#{pid}.jpg")
+		download_file(src_big, post_dir, "#{pid}.jpg")
+		puts "[i] downloaded"
+	end
+end
+
+class DocAttachment < Attachment
+	attr_reader :raw
+
+	def initialize(raw, post_dir)
+		@raw = raw
+		super(post_dir)
+	end
+
+	def did
+		@raw['did']
+	end
+
+	def title
+		@raw['title']
+	end
+
+	def url
+		@raw['url']
+	end
+
+	def save
+		puts "[i] downloading #{url}..."
+		download_file(url, post_dir, "#{did}#{title}")
 		puts "[i] downloaded"
 	end
 end
@@ -107,8 +143,40 @@ class AudioAttachment < Attachment
 		return if track_name.empty?
 
 		puts "[i] downloading #{track_name}: #{url}..."
-		download_file(url, "#{post_dir}/#{track_name}")
+		download_file(url, post_dir, "#{track_name}")
 		puts "[i] downloaded"
+	end
+end
+
+class PollAttachment < Attachment
+	attr_reader :raw
+
+	def initialize(app, raw, post_dir)
+		@raw = raw
+		@app = app
+		@info = []
+		super(post_dir)
+	end
+
+	def owner_id
+		@raw['owner_id']
+	end
+
+	def poll_id
+		@raw['poll_id']
+	end
+
+	def get_info
+		@info = @app.polls.getById(poll_id: poll_id)
+		puts @info.inspect
+		return (@info != [])
+	end
+
+	def save
+		return if !get_info
+
+		File::new("#{post_dir}/#{poll_id}.poll", 'w').write(@info)
+		raise
 	end
 end
 
@@ -121,8 +189,24 @@ class AttachmentFactory
 			return PhotoAttachment::new(info, post_dir)
 		when 'audio'
 			return AudioAttachment::new(app, info, post_dir)
+		when 'doc'
+			return DocAttachment::new(info, post_dir)
+		when 'link'
+			return nil
+		when 'video'
+			return nil
+		when 'graffiti' # – граффити
+			return nil
+		when 'note' # – заметка
+			return nil
+		when 'app' # – изображение, загруженное сторонним приложением
+			return nil
+		when 'poll' # – голосование
+			return PollAttachment::new(app, info, post_dir)
+		when 'page' # – wiki страница
+			return nil
 		else
-			#raise "unknown attachment type: #{typename}"
+			raise "unknown attachment type: #{typename}"
 		end
 	end
 
