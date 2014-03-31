@@ -54,11 +54,13 @@ class Post
 	end
 
 	def get_attachments
+		return if exists?
 		return [] if !@raw.include?('attachments')
 		AttachmentFactory.get_attachments(@app, @raw['attachments'], post_dir)
 	end
 
 	def get_comments
+		return if exists?
 		return [] if !@raw.include?('comments')
 		return [] if @raw['comments'].empty?
 
@@ -88,10 +90,7 @@ class Post
 	def exists?
 		return false if not Dir::exist?(post_dir)
 		return false if not File::exist?(raw_path)
-
-		old_raw = File::open(raw_path).read
-
-		return (@raw.to_s == old_raw)
+		true
 	end
 
 	def save_raw
