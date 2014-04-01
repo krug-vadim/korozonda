@@ -75,8 +75,12 @@ puts total
 	posts = posts[1..-1]
 
 	posts.each do |raw|
-		post = Post::new(app, raw)
-		post.save
+		begin
+			post = Post::new(app, raw)
+			post.save
+		rescue
+			puts "EXCEPTION!!!!"
+		end
 		sleep(0.5)
 	end
 end
